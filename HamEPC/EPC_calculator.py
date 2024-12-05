@@ -254,6 +254,8 @@ class EPC_calculator(object):
             self.graph_data.num_electrons = np.sum(num_val_openmx[self.graph_data.species])
         elif self.Ham_type in ['siesta', 'honpas']:
             self.graph_data.num_electrons = np.sum(num_val_siesta[self.graph_data.species])
+        elif self.Ham_type == 'abacus':
+            self.graph_data.num_electrons = np.sum(num_val_abacus[self.graph_data.species])
         if self.soc_switch:
             self.graph_data.num_VMB = self.graph_data.num_electrons-1
         else:
@@ -402,7 +404,11 @@ class EPC_calculator(object):
             self._initial_transport()
             self._parse_input_optional(config=config, block_name='mobility')
             self._initial_mobility()
-            del config['phonon'], config['epc'], config['transport'], config['mobility']
+            # del config['phonon'], config['epc'], config['transport'], config['mobility']
+            config.pop('phonon', None)
+            config.pop('epc', None)
+            config.pop('transport', None)
+            config.pop('mobility', None)
         elif self.cal_mode == 'superconduct':
             if self.rank == 0: print('#'*50+' Superconductivity Calculation '+'#'*50)
             self._parse_input_optional(config=config, block_name='phonon')
@@ -413,19 +419,26 @@ class EPC_calculator(object):
             self._initial_transport()
             self._parse_input_optional(config=config, block_name='superconduct')
             self._initial_superconduct()
-            del config['phonon'], config['epc'], config['transport'], config['superconduct']
+            # del config['phonon'], config['epc'], config['transport'], config['superconduct']
+            config.pop('phonon', None)
+            config.pop('epc', None)
+            config.pop('transport', None)
+            config.pop('superconduct', None)
         elif self.cal_mode == 'band':
             if self.rank == 0: print('#'*50+' Band Calculation '+'#'*50)
             self._parse_input_optional(config=config, block_name='dispersion')
             self._initial_dispersion()
-            del config['dispersion']   
+            # del config['dispersion']   
+            config.pop('dispersion', None)
         elif self.cal_mode == 'phonon':
             if self.rank == 0: print('#'*50+' Phonon Calculation '+'#'*50)        
             self._parse_input_optional(config=config, block_name='phonon')
             self._initial_phonon()  
             self._parse_input_optional(config=config, block_name='dispersion')
             self._initial_dispersion()    
-            del config['phonon'], config['dispersion']   
+            # del config['phonon'], config['dispersion']   
+            config.pop('phonon', None)
+            config.pop('dispersion', None)
         elif self.cal_mode == 'epc':
             if self.rank == 0: print('#'*50+' EPC Calculation '+'#'*50)
             self._parse_input_optional(config=config, block_name='phonon')
@@ -434,7 +447,10 @@ class EPC_calculator(object):
             self._initial_epc()
             self._parse_input_optional(config=config, block_name='dispersion')
             self._initial_dispersion()    
-            del config['phonon'], config['epc'], config['dispersion']
+            # del config['phonon'], config['epc'], config['dispersion']
+            config.pop('phonon', None)
+            config.pop('epc', None)
+            config.pop('dispersion', None)            
 
         if self.rank == 0: 
             for key in config.keys():
@@ -454,7 +470,7 @@ class EPC_calculator(object):
         # check
         if self.cal_mode not in ['mobility', 'superconduct', 'band', 'phonon', 'epc']:
             raise NotImplementedError('The calculation mode is not supported!', '1002')
-        if self.Ham_type not in ['openmx', 'honpas', 'siesta']:
+        if self.Ham_type.lower() not in ['openmx', 'honpas', 'siesta', 'abacus']:
             raise NotImplementedError('The Hamitonian type is not supported!', '1003')
 
     def _parse_input_optional(self, config:EasyDict, block_name:str):
